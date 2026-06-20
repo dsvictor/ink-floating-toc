@@ -16,7 +16,7 @@
   "enableContentOffset": false,
   "enableDragReorder": false,
   "barLength": 3,
-  "barThickness": 5,
+  "barThickness": 3,
   "barBackground": true,
   "h1Color": "#ff0000",
   "h2Color": "#bf00e6",
