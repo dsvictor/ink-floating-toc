@@ -4,6 +4,8 @@
 
 /* ⬇️ EDIT THESE VARIABLES TO TWEAK THE DESIGN ⬇️ */
 body {
+    --toc-top-gap: 120px;                     /* Gap from top of screen (if Top aligned) */
+    --toc-bottom-gap: 120px;                  /* Gap from bottom of screen (if Bottom aligned) */
     --toc-gap: 6px;                           /* Gap between bars */
     --toc-pill-padding: 1px;                  /* How much larger the pill is than the bar */
     --toc-pill-bg: rgba(128, 128, 128, 0.15); /* Glass background color */
@@ -98,3 +100,37 @@ body.enable-pill-container.enable-hollow-line-style .workspace-leaf-content .flo
 body.enable-pill-container.enable-hollow-line-style .workspace-leaf-content .floating-toc-div .heading-list-item[data-level='4']::before { height: calc((8px * var(--toc-bar-multiplier,1)) + (var(--toc-pill-padding) * 2)) !important; }
 body.enable-pill-container.enable-hollow-line-style .workspace-leaf-content .floating-toc-div .heading-list-item[data-level='5']::before { height: calc((6px * var(--toc-bar-multiplier,1)) + (var(--toc-pill-padding) * 2)) !important; }
 body.enable-pill-container.enable-hollow-line-style .workspace-leaf-content .floating-toc-div .heading-list-item[data-level='6']::before { height: calc((4px * var(--toc-bar-multiplier,1)) + (var(--toc-pill-padding) * 2)) !important; }
+
+
+
+/* 2. Anti-Overflow Bounds (Fixes the Massive Scroll Void & Cut-off Lists) */
+/* By removing 'transform: translateY', we prevent the list from breaking out of the screen bounds */
+body[data-toc-valign='middle'] .workspace-leaf-content .floating-toc-div {
+    top: 10% !important; 
+    bottom: 10% !important; 
+    height: 80% !important; 
+    transform: none !important; 
+    display: flex !important; 
+    flex-direction: column !important; 
+    justify-content: center !important;
+}
+body[data-toc-valign='top'] .workspace-leaf-content .floating-toc-div {
+    top: var(--toc-top-gap) !important; /* <--- Now uses your variable */
+    bottom: auto !important; 
+    transform: none !important;
+    height: max-content !important; 
+    max-height: calc(100% - var(--toc-top-gap)) !important; /* Prevents overflow at the bottom */
+    display: flex !important; 
+    flex-direction: column !important; 
+    justify-content: flex-start !important;
+}
+body[data-toc-valign='bottom'] .workspace-leaf-content .floating-toc-div {
+    top: auto !important; 
+    bottom: var(--toc-bottom-gap) !important; /* <--- Now uses your variable */
+    transform: none !important;
+    height: max-content !important; 
+    max-height: calc(100% - var(--toc-bottom-gap)) !important; /* Prevents overflow at the top */
+    display: flex !important; 
+    flex-direction: column !important; 
+    justify-content: flex-end !important;
+}
