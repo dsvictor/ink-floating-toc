@@ -1,0 +1,100 @@
+/* ==========================================================
+   INK FLOATING TOC - GLASS PILL OVERRIDES
+   ========================================================== */
+
+/* ⬇️ EDIT THESE VARIABLES TO TWEAK THE DESIGN ⬇️ */
+body {
+    --toc-gap: 6px;                           /* Gap between bars */
+    --toc-pill-padding: 1px;                  /* How much larger the pill is than the bar */
+    --toc-pill-bg: rgba(128, 128, 128, 0.15); /* Glass background color */
+    --toc-pill-blur: 10px;                    /* Frosted glass blur amount */
+    --toc-pill-highlight: #ffffff;            /* Top-Left 45° Highlight */
+    --toc-pill-shadow: rgba(0, 0, 0, 0.25);   /* Bottom-Right 45° Shadow */
+    --toc-pill-offset: 1px;                   /* Distance of the light/shadow */
+}
+/* ⬆️ ---------------------------------------- ⬆️ */
+
+
+/* Apply the Gap & Padding to container */
+body .workspace-leaf-content .floating-toc-div .floating-toc {
+    gap: var(--toc-gap) !important;
+    padding: 4px !important;
+}
+
+/* Base Pill Styles (Shadows, Blurs, and Radius) */
+body.enable-pill-container .workspace-leaf-content .floating-toc-div .heading-list-item::before {
+    background-color: var(--toc-pill-bg) !important;
+    backdrop-filter: blur(var(--toc-pill-blur)) !important;
+    -webkit-backdrop-filter: blur(var(--toc-pill-blur)) !important;
+    box-shadow: 
+        calc(var(--toc-pill-padding) * -1) calc(var(--toc-pill-padding) * -1) 0 var(--toc-pill-highlight), 
+        var(--toc-pill-padding) var(--toc-pill-padding) 0 var(--toc-pill-shadow) !important;
+    border-radius: calc(var(--toc-line-thickness, 2px) * 2) !important;
+}
+
+/* ----------------------------------------------------
+   SIZING MATH: HORIZONTAL SOLID
+---------------------------------------------------- */
+body.enable-pill-container.enable-horizontal-solid-line-style .workspace-leaf-content .floating-toc-div .heading-list-item::before {
+    height: calc(var(--toc-line-thickness, 2px) + (var(--toc-pill-padding) * 2)) !important;
+}
+body.enable-pill-container.enable-horizontal-solid-line-style .workspace-leaf-content .floating-toc-div.floating-left .heading-list-item::before { left: calc(var(--toc-pill-padding) * -1) !important; }
+body.enable-pill-container.enable-horizontal-solid-line-style .workspace-leaf-content .floating-toc-div.floating-right .heading-list-item::before { right: calc(var(--toc-pill-padding) * -1) !important; }
+
+body.enable-pill-container.enable-horizontal-solid-line-style .workspace-leaf-content .floating-toc-div .heading-list-item[data-level='1']::before { width: calc((24px * var(--toc-bar-multiplier,1)) + (var(--toc-pill-padding) * 2)) !important; }
+body.enable-pill-container.enable-horizontal-solid-line-style .workspace-leaf-content .floating-toc-div .heading-list-item[data-level='2']::before { width: calc((18px * var(--toc-bar-multiplier,1)) + (var(--toc-pill-padding) * 2)) !important; }
+body.enable-pill-container.enable-horizontal-solid-line-style .workspace-leaf-content .floating-toc-div .heading-list-item[data-level='3']::before { width: calc((12px * var(--toc-bar-multiplier,1)) + (var(--toc-pill-padding) * 2)) !important; }
+body.enable-pill-container.enable-horizontal-solid-line-style .workspace-leaf-content .floating-toc-div .heading-list-item[data-level='4']::before { width: calc((8px * var(--toc-bar-multiplier,1)) + (var(--toc-pill-padding) * 2)) !important; }
+body.enable-pill-container.enable-horizontal-solid-line-style .workspace-leaf-content .floating-toc-div .heading-list-item[data-level='5']::before { width: calc((6px * var(--toc-bar-multiplier,1)) + (var(--toc-pill-padding) * 2)) !important; }
+body.enable-pill-container.enable-horizontal-solid-line-style .workspace-leaf-content .floating-toc-div .heading-list-item[data-level='6']::before { width: calc((4px * var(--toc-bar-multiplier,1)) + (var(--toc-pill-padding) * 2)) !important; }
+
+
+/* ----------------------------------------------------
+   SIZING MATH: VERTICAL SOLID
+---------------------------------------------------- */
+body.enable-pill-container.enable-vertical-line-style .workspace-leaf-content .floating-toc-div .heading-list-item::before {
+    width: calc(var(--toc-line-thickness, 2px) + (var(--toc-pill-padding) * 2)) !important;
+}
+body.enable-pill-container.enable-vertical-line-style .workspace-leaf-content .floating-toc-div.floating-left .heading-list-item::before { left: calc(var(--toc-pill-padding) * -1) !important; }
+body.enable-pill-container.enable-vertical-line-style .workspace-leaf-content .floating-toc-div.floating-right .heading-list-item::before { right: calc(var(--toc-pill-padding) * -1) !important; }
+
+body.enable-pill-container.enable-vertical-line-style .workspace-leaf-content .floating-toc-div .heading-list-item[data-level='1']::before { height: calc((20px * var(--toc-bar-multiplier,1)) + (var(--toc-pill-padding) * 2)) !important; }
+body.enable-pill-container.enable-vertical-line-style .workspace-leaf-content .floating-toc-div .heading-list-item[data-level='2']::before { height: calc((16px * var(--toc-bar-multiplier,1)) + (var(--toc-pill-padding) * 2)) !important; }
+body.enable-pill-container.enable-vertical-line-style .workspace-leaf-content .floating-toc-div .heading-list-item[data-level='3']::before { height: calc((12px * var(--toc-bar-multiplier,1)) + (var(--toc-pill-padding) * 2)) !important; }
+body.enable-pill-container.enable-vertical-line-style .workspace-leaf-content .floating-toc-div .heading-list-item[data-level='4']::before { height: calc((8px * var(--toc-bar-multiplier,1)) + (var(--toc-pill-padding) * 2)) !important; }
+body.enable-pill-container.enable-vertical-line-style .workspace-leaf-content .floating-toc-div .heading-list-item[data-level='5']::before { height: calc((6px * var(--toc-bar-multiplier,1)) + (var(--toc-pill-padding) * 2)) !important; }
+body.enable-pill-container.enable-vertical-line-style .workspace-leaf-content .floating-toc-div .heading-list-item[data-level='6']::before { height: calc((4px * var(--toc-bar-multiplier,1)) + (var(--toc-pill-padding) * 2)) !important; }
+
+
+/* ----------------------------------------------------
+   SIZING MATH: HORIZONTAL HOLLOW
+---------------------------------------------------- */
+body.enable-pill-container.enable-horizontal-hollow-line-style .workspace-leaf-content .floating-toc-div .heading-list-item::before {
+    height: calc((var(--toc-line-thickness, 2px) * 2.5) + (var(--toc-pill-padding) * 2)) !important;
+}
+body.enable-pill-container.enable-horizontal-hollow-line-style .workspace-leaf-content .floating-toc-div.floating-left .heading-list-item::before { left: calc(var(--toc-pill-padding) * -1) !important; }
+body.enable-pill-container.enable-horizontal-hollow-line-style .workspace-leaf-content .floating-toc-div.floating-right .heading-list-item::before { right: calc(var(--toc-pill-padding) * -1) !important; }
+
+body.enable-pill-container.enable-horizontal-hollow-line-style .workspace-leaf-content .floating-toc-div .heading-list-item[data-level='1']::before { width: calc((24px * var(--toc-bar-multiplier,1)) + (var(--toc-pill-padding) * 2)) !important; }
+body.enable-pill-container.enable-horizontal-hollow-line-style .workspace-leaf-content .floating-toc-div .heading-list-item[data-level='2']::before { width: calc((18px * var(--toc-bar-multiplier,1)) + (var(--toc-pill-padding) * 2)) !important; }
+body.enable-pill-container.enable-horizontal-hollow-line-style .workspace-leaf-content .floating-toc-div .heading-list-item[data-level='3']::before { width: calc((12px * var(--toc-bar-multiplier,1)) + (var(--toc-pill-padding) * 2)) !important; }
+body.enable-pill-container.enable-horizontal-hollow-line-style .workspace-leaf-content .floating-toc-div .heading-list-item[data-level='4']::before { width: calc((8px * var(--toc-bar-multiplier,1)) + (var(--toc-pill-padding) * 2)) !important; }
+body.enable-pill-container.enable-horizontal-hollow-line-style .workspace-leaf-content .floating-toc-div .heading-list-item[data-level='5']::before { width: calc((6px * var(--toc-bar-multiplier,1)) + (var(--toc-pill-padding) * 2)) !important; }
+body.enable-pill-container.enable-horizontal-hollow-line-style .workspace-leaf-content .floating-toc-div .heading-list-item[data-level='6']::before { width: calc((4px * var(--toc-bar-multiplier,1)) + (var(--toc-pill-padding) * 2)) !important; }
+
+
+/* ----------------------------------------------------
+   SIZING MATH: VERTICAL HOLLOW
+---------------------------------------------------- */
+body.enable-pill-container.enable-hollow-line-style .workspace-leaf-content .floating-toc-div .heading-list-item::before {
+    width: calc((var(--toc-line-thickness, 2px) * 2.5) + (var(--toc-pill-padding) * 2)) !important;
+}
+body.enable-pill-container.enable-hollow-line-style .workspace-leaf-content .floating-toc-div.floating-left .heading-list-item::before { left: calc(var(--toc-pill-padding) * -1) !important; }
+body.enable-pill-container.enable-hollow-line-style .workspace-leaf-content .floating-toc-div.floating-right .heading-list-item::before { right: calc(var(--toc-pill-padding) * -1) !important; }
+
+body.enable-pill-container.enable-hollow-line-style .workspace-leaf-content .floating-toc-div .heading-list-item[data-level='1']::before { height: calc((20px * var(--toc-bar-multiplier,1)) + (var(--toc-pill-padding) * 2)) !important; }
+body.enable-pill-container.enable-hollow-line-style .workspace-leaf-content .floating-toc-div .heading-list-item[data-level='2']::before { height: calc((16px * var(--toc-bar-multiplier,1)) + (var(--toc-pill-padding) * 2)) !important; }
+body.enable-pill-container.enable-hollow-line-style .workspace-leaf-content .floating-toc-div .heading-list-item[data-level='3']::before { height: calc((12px * var(--toc-bar-multiplier,1)) + (var(--toc-pill-padding) * 2)) !important; }
+body.enable-pill-container.enable-hollow-line-style .workspace-leaf-content .floating-toc-div .heading-list-item[data-level='4']::before { height: calc((8px * var(--toc-bar-multiplier,1)) + (var(--toc-pill-padding) * 2)) !important; }
+body.enable-pill-container.enable-hollow-line-style .workspace-leaf-content .floating-toc-div .heading-list-item[data-level='5']::before { height: calc((6px * var(--toc-bar-multiplier,1)) + (var(--toc-pill-padding) * 2)) !important; }
+body.enable-pill-container.enable-hollow-line-style .workspace-leaf-content .floating-toc-div .heading-list-item[data-level='6']::before { height: calc((4px * var(--toc-bar-multiplier,1)) + (var(--toc-pill-padding) * 2)) !important; }
