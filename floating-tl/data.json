@@ -11,7 +11,7 @@
   "expandAllSubheadings": false,
   "isDefaultHide": false,
   "enableHeadingNowrap": false,
-  "barStyle": "enable-hollow-line-style",
+  "barStyle": "enable-vertical-line-style",
   "enableBarHeadingText": false,
   "enableContentOffset": false,
   "enableDragReorder": false,
