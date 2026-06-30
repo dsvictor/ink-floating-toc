@@ -1,6 +1,5 @@
 # Ink Floating TOC
 
-![Uploading Screenshot.png…]()
 ![image](Assets/Screenshot.png)
 
 
