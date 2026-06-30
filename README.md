@@ -1,5 +1,8 @@
 # Ink Floating TOC
 
+![Uploading Screenshot.png…]()
+
+
 **Ink Floating TOC** is a sleek, highly customizable, and unobtrusive Table of Contents plugin for Obsidian. Designed for users who want quick document navigation without sacrificing screen real estate or aesthetic appeal, it replaces bulky text lists with an elegant, interactive visual bar system.
 
 Whether you are organizing a massive PKM vault on your desktop or reviewing notes on an iPad, Ink Floating TOC adapts perfectly to your workflow and your theme.
