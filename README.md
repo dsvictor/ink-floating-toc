@@ -57,7 +57,7 @@ Make the TOC look exactly how you want it to, right from the settings menu:
 - **Interactive Tooltips:** Hover over (or tap and hold) any bar to view a tooltip containing the exact text of that heading. Tooltips are automatically stripped of markdown syntax (like brackets or bold tags) for a clean reading experience.
     
 
-## ⚙️ Settings Overview
+##  Settings Overview
 
 |**Setting**|**Description**|
 |---|---|
