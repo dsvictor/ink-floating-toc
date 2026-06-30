@@ -71,6 +71,6 @@ Make the TOC look exactly how you want it to, right from the settings menu:
 
 
 
-##** If you like my work, consider a tip **##
+##** If you like my work, consider a tip
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/jayantakumardas)
