@@ -57,13 +57,6 @@ Make the TOC look exactly how you want it to, right from the settings menu:
 - **Interactive Tooltips:** Hover over (or tap and hold) any bar to view a tooltip containing the exact text of that heading. Tooltips are automatically stripped of markdown syntax (like brackets or bold tags) for a clean reading experience.
     
 
-### Pixel-Perfect Layout
-
-- **Unobtrusive Empty State:** If a note has no headings, or if you open a completely blank "New Tab", the TOC gracefully collapses into a single, muted placeholder bar.
-    
-- **Absolute Anchoring:** Position the TOC exactly where you want it (Left/Right, Top/Middle/Bottom). The container strictly anchors to your chosen side, unaffected by scrollbar widths or changing Obsidian views (Source Mode vs. Reading Mode).
-    
-
 ## ⚙️ Settings Overview
 
 |**Setting**|**Description**|
@@ -78,6 +71,6 @@ Make the TOC look exactly how you want it to, right from the settings menu:
 
 
 
-
+##** If you like my work, consider a tip **##
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/jayantakumardas)
