@@ -26,7 +26,6 @@ const DEFAULT_SETTINGS = {
 class InkFloatingTOCPlugin extends Plugin {
     async onload() {
 
-        // Disable on phones only
         if (Platform.isPhone) {
             console.log('Ink Floating TOC disabled on phones');
             return;
@@ -86,7 +85,6 @@ class InkFloatingTOCPlugin extends Plugin {
             headings = cache?.headings || [];
         }
 
-        // Apply Hidden Headings Filter
         if (this.settings.hiddenHeadings && headings.length > 0) {
             const hiddenLevels = new Set(this.settings.hiddenHeadings.match(/\d/g)?.map(Number) || []);
             headings = headings.filter(h => !hiddenLevels.has(h.level));
@@ -97,7 +95,6 @@ class InkFloatingTOCPlugin extends Plugin {
         const container = document.createElement('div');
         container.classList.add('ink-toc-container', `pos-h-${this.settings.horizontalPos}`, `pos-v-${this.settings.verticalPos}`);
         
-        // Compensate for missing scrollbar track in completely empty tabs
         if (viewType === 'empty') {
             container.classList.add('is-empty-tab');
         }
@@ -105,16 +102,13 @@ class InkFloatingTOCPlugin extends Plugin {
         const list = document.createElement('div');
         list.classList.add('ink-toc-list');
 
-        // Handle the Empty State
         if (headings.length === 0) {
             const item = document.createElement('div');
             item.classList.add('ink-toc-item', `style-${this.settings.barStyle}`, 'toc-empty-state');
             
-            // Explicitly set to Level 1 (H1) size for the empty state
             item.setAttribute('data-level', '1');
             item.dataset.level = "1"; 
             
-            // Use Obsidian's native muted text color
             item.style.setProperty('--item-color', 'var(--text-muted)');
 
             const bar = document.createElement('div');
@@ -138,7 +132,7 @@ class InkFloatingTOCPlugin extends Plugin {
             item.appendChild(anchor);
             list.appendChild(item);
         } else {
-            // Normal heading generation loop
+
             headings.forEach((heading, index) => {
                 const item = document.createElement('div');
                 item.classList.add('ink-toc-item', `style-${this.settings.barStyle}`);
@@ -148,7 +142,6 @@ class InkFloatingTOCPlugin extends Plugin {
                 item.dataset.index = index;
                 item.dataset.collapsed = "false";
                 
-                // Determine Color: Monochrome (Theme Adaptable) vs Custom Colors
                 const colorValue = this.settings.useMonochrome 
                     ? 'var(--text-muted)' 
                     : (this.settings[`h${heading.level}Color`] || '#fff');
@@ -182,7 +175,6 @@ class InkFloatingTOCPlugin extends Plugin {
 
         container.appendChild(list);
         
-        // Inject at the highest non-scrolling layer possible
         const rootEl = view.contentEl || view.containerEl;
         const sView = rootEl.querySelector('.markdown-source-view');
         const rView = rootEl.querySelector('.markdown-reading-view');
@@ -202,8 +194,6 @@ class InkFloatingTOCPlugin extends Plugin {
 
         const line = parseInt(item.dataset.line);
 
-        // --- DESKTOP / MOUSE LOGIC ---
-        // Instantly execute actions without a timer
         if (e.pointerType === 'mouse') {
             if (e.altKey) {
                 this.executeAltClick(item, line);
@@ -215,8 +205,6 @@ class InkFloatingTOCPlugin extends Plugin {
             return; 
         }
 
-        // --- TABLET / TOUCH LOGIC ---
-        // Use the timer to count single, double, and triple taps
         if (!this.clickCount) this.clickCount = 0;
         this.clickCount++;
 
@@ -224,22 +212,17 @@ class InkFloatingTOCPlugin extends Plugin {
 
         this.clickTimer = setTimeout(() => {
             const count = this.clickCount;
-            this.clickCount = 0; // Reset for next interaction
+            this.clickCount = 0;
 
             if (count >= 3) {
-                // TRIPLE TAP -> Replicate Alt+Click (Collapse)
                 this.executeAltClick(item, line);
             } else if (count === 2) {
-                // DOUBLE TAP -> Replicate Ctrl+Click (Fold)
                 this.executeCtrlClick(view, line);
             } else {
-                // SINGLE TAP -> Replicate Standard Click (Navigate)
                 this.executeStandardClick(view, line);
             }
-        }, 300); // 300ms window to detect the next tap
+        }, 300);
     }
-
-    // --- HELPER METHODS ---
 
     executeAltClick(item, line) {
         const currentLevel = parseInt(item.dataset.level);
@@ -270,14 +253,12 @@ class InkFloatingTOCPlugin extends Plugin {
     executeCtrlClick(view, line) {
         view.leaf.openFile(view.file, { eState: { line: line } });
         
-        // The editor must temporarily gain focus to toggle a fold on the specific line
         view.editor.focus();
         view.editor.setCursor({ line: line, ch: 0 });
         
         setTimeout(() => {
             this.app.commands.executeCommandById('editor:toggle-fold');
             
-            // Instantly blur after folding to ensure iPad keyboard hides
             if (document.activeElement) {
                 document.activeElement.blur();
             }
@@ -287,7 +268,6 @@ class InkFloatingTOCPlugin extends Plugin {
     executeStandardClick(view, line) {
         view.leaf.openFile(view.file, { eState: { line: line } });
         
-        // Ensure iPad keyboard stays hidden on standard navigation
         if (document.activeElement) {
             document.activeElement.blur();
         }
@@ -571,31 +551,25 @@ class InkTOCSettingTab extends PluginSettingTab {
                         }));
             }
         }
-        // --- NEW KO-FI BUTTON SECTION ---
         
-        // Add some spacing and a visual divider
         containerEl.createEl('br');
         containerEl.createEl('hr');
         containerEl.createEl('br');
 
-        // Create a centered container for the support section
         const supportDiv = containerEl.createDiv();
         supportDiv.style.textAlign = 'center';
         supportDiv.style.marginTop = '20px';
         supportDiv.style.marginBottom = '20px';
         
-        // Add a friendly message
         supportDiv.createEl('p', { 
             text: 'If you enjoy using Ink Floating TOC, consider supporting its development! ☕️',
             attr: { style: 'margin-bottom: 15px; opacity: 0.8;' }
         });
 
-        // Create the clickable Ko-fi link
         const kofiLink = supportDiv.createEl('a', {
-            href: 'https://ko-fi.com/jayantakumardas' // <-- REPLACE THIS WITH YOUR KO-FI URL
+            href: 'https://ko-fi.com/jayantakumardas'
         });
         
-        // Inject the official Ko-fi SVG badge image
         const kofiImg = kofiLink.createEl('img', {
             attr: {
                 src: 'https://ko-fi.com/img/githubbutton_sm.svg',
