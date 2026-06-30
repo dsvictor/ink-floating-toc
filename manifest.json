@@ -2,7 +2,7 @@
   "id": "ink-floating-toc",
   "name": "Ink Floating TOC",
   "version": "1.0.0",
-  "minAppVersion": "1.0.0",
+  "minAppVersion": "0.14.0",
   "description": "A highly customizable, floating Table of Contents with multi-device support.",
   "author": "Jayanta Kumar Das",
   "authorUrl": "https://github.com/dsvictor",
