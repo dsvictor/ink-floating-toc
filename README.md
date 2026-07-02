@@ -62,7 +62,7 @@ Make the TOC look exactly how you want it to, right from the settings menu:
 |**Setting**|**Description**|
 |---|---|
 |**Horizontal / Vertical Position**|Pin the TOC to any side or corner of your editor window.|
-|**Hide Specific Headings**|Filter out clutter (e.g., enter `h5, h6` to only see major sections).|
+|**Hide Specific Headings**|Filter out clutter (e.g., enter `h5, h6 or H5, H6, or just 5, 6` to only see major sections).|
 |**Bar Style**|Choose between solid fills or hollow borders, in horizontal or vertical orientations.|
 |**Bar Length & Thickness**|Sliders to fine-tune the physical footprint of the TOC.|
 |**Monochrome Bars**|Toggle native theme adaptation on or off.|
