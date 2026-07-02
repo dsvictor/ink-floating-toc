@@ -52,7 +52,7 @@ Make the TOC look exactly how you want it to, right from the settings menu:
 
 ### Smart Content Filtering
 
-- **Hide Specific Headings:** Exclude specific heading levels from the TOC. Simply type `h3, h4` in the settings, and the plugin will instantly filter those levels out of your visual outline.
+- **Hide Specific Headings:** Exclude specific heading levels from the TOC. Simply type `h3, h4 (or H3, H4, or just 3, 4)` in the settings, and the plugin will instantly filter those levels out of your visual outline.
     
 - **Interactive Tooltips:** Hover over (or tap and hold) any bar to view a tooltip containing the exact text of that heading. Tooltips are automatically stripped of markdown syntax (like brackets or bold tags) for a clean reading experience.
     
@@ -62,7 +62,7 @@ Make the TOC look exactly how you want it to, right from the settings menu:
 |**Setting**|**Description**|
 |---|---|
 |**Horizontal / Vertical Position**|Pin the TOC to any side or corner of your editor window.|
-|**Hide Specific Headings**|Filter out clutter (e.g., enter `h5, h6 or H5, H6, or just 5, 6` to only see major sections).|
+|**Hide Specific Headings**|Filter out clutter (e.g., enter `h3, h4 or H3, H4, or just 3, 4` to only see major sections).|
 |**Bar Style**|Choose between solid fills or hollow borders, in horizontal or vertical orientations.|
 |**Bar Length & Thickness**|Sliders to fine-tune the physical footprint of the TOC.|
 |**Monochrome Bars**|Toggle native theme adaptation on or off.|
