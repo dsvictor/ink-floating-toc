@@ -12,6 +12,9 @@ const DEFAULT_SETTINGS = {
     barStyle: 'solid-horizontal',
     barLength: 1.0,
     barThickness: 2,
+    dotSize: 8,
+    uniformSize: false,
+    itemSpacing: 6,
     enableTooltip: true,
     useMonochrome: true,
     hiddenHeadings: '',
@@ -68,18 +71,18 @@ class InkFloatingTOCPlugin extends Plugin {
 
     refreshTOC() {
         this.removeTOC();
-        
+
         const leaf = this.app.workspace.activeLeaf || this.app.workspace.getMostRecentLeaf();
         if (!leaf || !leaf.view) return;
-        
+
         const view = leaf.view;
         const viewType = view.getViewType();
-        
+
         if (viewType !== 'markdown' && viewType !== 'empty') return;
 
         const file = view.file;
         let headings = [];
-        
+
         if (file && viewType === 'markdown') {
             const cache = this.app.metadataCache.getFileCache(file);
             headings = cache?.headings || [];
@@ -94,21 +97,25 @@ class InkFloatingTOCPlugin extends Plugin {
 
         const container = document.createElement('div');
         container.classList.add('ink-toc-container', `pos-h-${this.settings.horizontalPos}`, `pos-v-${this.settings.verticalPos}`);
-        
+
         if (viewType === 'empty') {
             container.classList.add('is-empty-tab');
         }
-        
+
+        if (this.settings.uniformSize) {
+            container.classList.add('uniform-size');
+        }
+
         const list = document.createElement('div');
         list.classList.add('ink-toc-list');
 
         if (headings.length === 0) {
             const item = document.createElement('div');
             item.classList.add('ink-toc-item', `style-${this.settings.barStyle}`, 'toc-empty-state');
-            
+
             item.setAttribute('data-level', '1');
-            item.dataset.level = "1"; 
-            
+            item.dataset.level = "1";
+
             item.style.setProperty('--item-color', 'var(--text-muted)');
 
             const bar = document.createElement('div');
@@ -141,16 +148,16 @@ class InkFloatingTOCPlugin extends Plugin {
                 item.dataset.line = heading.position.start.line;
                 item.dataset.index = index;
                 item.dataset.collapsed = "false";
-                
-                const colorValue = this.settings.useMonochrome 
-                    ? 'var(--text-muted)' 
+
+                const colorValue = this.settings.useMonochrome
+                    ? 'var(--text-muted)'
                     : (this.settings[`h${heading.level}Color`] || '#fff');
-                
+
                 item.style.setProperty('--item-color', colorValue);
 
                 const bar = document.createElement('div');
                 bar.classList.add('ink-toc-bar');
-                
+
                 const indicator = document.createElement('div');
                 indicator.classList.add('ink-toc-indicator');
 
@@ -167,18 +174,18 @@ class InkFloatingTOCPlugin extends Plugin {
                 item.appendChild(bar);
                 item.appendChild(indicator);
                 item.appendChild(anchor);
-                
+
                 item.addEventListener('pointerup', (e) => this.handleItemClick(e, view, item, list));
                 list.appendChild(item);
             });
         }
 
         container.appendChild(list);
-        
+
         const rootEl = view.contentEl || view.containerEl;
         const sView = rootEl.querySelector('.markdown-source-view');
         const rView = rootEl.querySelector('.markdown-reading-view');
-        
+
         if (sView) {
             sView.insertAdjacentElement('beforebegin', container);
         } else if (rView) {
@@ -202,7 +209,7 @@ class InkFloatingTOCPlugin extends Plugin {
             } else {
                 this.executeStandardClick(view, line);
             }
-            return; 
+            return;
         }
 
         if (!this.clickCount) this.clickCount = 0;
@@ -227,24 +234,24 @@ class InkFloatingTOCPlugin extends Plugin {
     executeAltClick(item, line) {
         const currentLevel = parseInt(item.dataset.level);
         const nextItem = item.nextElementSibling;
-        
+
         if (!nextItem || parseInt(nextItem.dataset.level) <= currentLevel) {
             return;
         }
 
         const isCollapsed = item.dataset.collapsed === "true";
         item.dataset.collapsed = isCollapsed ? "false" : "true";
-        
+
         let sibling = nextItem;
         while (sibling) {
             const siblingLevel = parseInt(sibling.dataset.level);
-            if (siblingLevel <= currentLevel) break; 
-            
+            if (siblingLevel <= currentLevel) break;
+
             if (isCollapsed) {
-                sibling.style.display = 'flex'; 
+                sibling.style.display = 'flex';
             } else {
-                sibling.style.display = 'none'; 
-                sibling.dataset.collapsed = "false"; 
+                sibling.style.display = 'none';
+                sibling.dataset.collapsed = "false";
             }
             sibling = sibling.nextElementSibling;
         }
@@ -252,13 +259,13 @@ class InkFloatingTOCPlugin extends Plugin {
 
     executeCtrlClick(view, line) {
         view.leaf.openFile(view.file, { eState: { line: line } });
-        
+
         view.editor.focus();
         view.editor.setCursor({ line: line, ch: 0 });
-        
+
         setTimeout(() => {
             this.app.commands.executeCommandById('editor:toggle-fold');
-            
+
             if (document.activeElement) {
                 document.activeElement.blur();
             }
@@ -267,7 +274,7 @@ class InkFloatingTOCPlugin extends Plugin {
 
     executeStandardClick(view, line) {
         view.leaf.openFile(view.file, { eState: { line: line } });
-        
+
         if (document.activeElement) {
             document.activeElement.blur();
         }
@@ -275,7 +282,7 @@ class InkFloatingTOCPlugin extends Plugin {
 
     injectCSS() {
         this.removeCSS();
-        
+
         const style = document.createElement('style');
         style.id = 'ink-toc-styles';
         style.textContent = `
@@ -285,47 +292,46 @@ class InkFloatingTOCPlugin extends Plugin {
                 pointer-events: none;
                 display: flex;
                 flex-direction: column;
-                
+
                 --toc-offset-d: 44px;
                 top: calc(12.5% - (0.875 * var(--toc-offset-d)));
                 bottom: calc(12.5% + (0.125 * var(--toc-offset-d)));
                 height: auto;
             }
-            
-            /* Strict Horizontal Anchoring (Removed offset over-engineering) */
+
+            /* Strict Horizontal Anchoring */
             .ink-toc-container.pos-h-left { left: 20px; right: auto; }
             .ink-toc-container.pos-h-right { right: 20px; left: auto; }
-            
+
             .ink-toc-container.pos-v-top { justify-content: flex-start; }
             .ink-toc-container.pos-v-middle { justify-content: center; }
             .ink-toc-container.pos-v-bottom { justify-content: flex-end; }
-            
+
             .ink-toc-list {
                 display: flex;
                 flex-direction: column;
-                gap: 6px;
+                gap: max(4px, var(--toc-item-spacing, 6px));
                 pointer-events: auto;
-                align-items: flex-start; 
-                
+                align-items: flex-start;
+
                 max-height: 100%;
                 overflow-y: auto;
                 overscroll-behavior: contain;
-                scrollbar-width: none; 
-                
-                /* iPad/Mobile Touch Fixes */
-                touch-action: pan-y; /* Strictly lock touch movements to vertical scrolling */
-                -webkit-user-select: none; /* Prevent accidental text highlighting while tapping */
-                user-select: none; 
+                scrollbar-width: none;
+
+                touch-action: pan-y;
+                -webkit-user-select: none;
+                user-select: none;
             }
-            
-            .ink-toc-list::-webkit-scrollbar { 
-                display: none; 
+
+            .ink-toc-list::-webkit-scrollbar {
+                display: none;
             }
-            
+
             .ink-toc-container.pos-h-right .ink-toc-list {
-                align-items: flex-end; 
+                align-items: flex-end;
             }
-            
+
             .ink-toc-item {
                 display: flex;
                 align-items: center;
@@ -333,28 +339,27 @@ class InkFloatingTOCPlugin extends Plugin {
                 position: relative;
                 opacity: 0.6;
                 transition: opacity 0.2s;
-                flex-shrink: 0; 
+                flex-shrink: 0;
             }
 
             .ink-toc-tooltip-anchor {
                 position: absolute;
-                inset: -4px -12px; 
+                inset: -4px -12px;
                 z-index: 10;
             }
-            
+
             .ink-toc-container.pos-h-right .ink-toc-item {
                 flex-direction: row-reverse;
             }
-            
+
             .ink-toc-item:hover { opacity: 1; }
 
             .ink-toc-item.toc-empty-state {
                 opacity: 0.3;
                 cursor: default;
-                /* Force H1 dimensions */
-                --item-level: 1 !important; 
+                --item-level: 1 !important;
             }
-            
+
             .ink-toc-item.toc-empty-state:hover {
                 opacity: 0.5;
             }
@@ -368,7 +373,7 @@ class InkFloatingTOCPlugin extends Plugin {
                 opacity: 0;
                 transition: opacity 0.2s;
             }
-            
+
             .ink-toc-item[data-collapsed="true"] .ink-toc-indicator {
                 opacity: 1;
             }
@@ -381,16 +386,16 @@ class InkFloatingTOCPlugin extends Plugin {
                 background-color: var(--item-color);
                 border-radius: 50px;
             }
-            
+
             /* Style: Hollow Horizontal */
             .ink-toc-item.style-hollow-horizontal .ink-toc-bar {
-                height: var(--toc-thickness, 2px); 
+                height: var(--toc-thickness, 2px);
                 width: calc(24px * var(--toc-length, 1) / var(--item-level, 1));
                 min-width: calc(24px * var(--toc-length, 1) / var(--item-level, 1));
                 border: 1px solid var(--item-color);
                 border-radius: 50px;
                 background: transparent;
-                box-sizing: border-box; 
+                box-sizing: border-box;
             }
 
             /* Style: Solid Vertical */
@@ -404,13 +409,33 @@ class InkFloatingTOCPlugin extends Plugin {
 
             /* Style: Hollow Vertical */
             .ink-toc-item.style-hollow-vertical .ink-toc-bar {
-                width: var(--toc-thickness, 2px); 
+                width: var(--toc-thickness, 2px);
                 height: calc(24px * var(--toc-length, 1) / var(--item-level, 1));
                 min-height: calc(24px * var(--toc-length, 1) / var(--item-level, 1));
                 border: 1px solid var(--item-color);
                 border-radius: 50px;
                 background: transparent;
-                box-sizing: border-box; 
+                box-sizing: border-box;
+            }
+
+            /* Style: Solid Dot */
+            .ink-toc-item.style-solid-dot .ink-toc-bar {
+                width: calc(var(--toc-dot-size, 8px) / var(--item-level, 1));
+                height: calc(var(--toc-dot-size, 8px) / var(--item-level, 1));
+                min-width: calc(var(--toc-dot-size, 8px) / var(--item-level, 1));
+                background-color: var(--item-color);
+                border-radius: 50%;
+            }
+
+            /* Style: Hollow Dot */
+            .ink-toc-item.style-hollow-dot .ink-toc-bar {
+                width: calc(var(--toc-dot-size, 8px) / var(--item-level, 1));
+                height: calc(var(--toc-dot-size, 8px) / var(--item-level, 1));
+                min-width: calc(var(--toc-dot-size, 8px) / var(--item-level, 1));
+                border: 1.5px solid var(--item-color);
+                border-radius: 50%;
+                background: transparent;
+                box-sizing: border-box;
             }
 
             .ink-toc-item[data-level="1"] { --item-level: 1; }
@@ -419,6 +444,11 @@ class InkFloatingTOCPlugin extends Plugin {
             .ink-toc-item[data-level="4"] { --item-level: 1.8; }
             .ink-toc-item[data-level="5"] { --item-level: 2.2; }
             .ink-toc-item[data-level="6"] { --item-level: 2.8; }
+
+            /* UPDATED: Universal Uniform Size override for all bar & dot styles */
+            .ink-toc-container.uniform-size .ink-toc-item[data-level] {
+                --item-level: 1 !important;
+            }
         `;
         document.head.appendChild(style);
         this.updateCSSVariables();
@@ -427,6 +457,8 @@ class InkFloatingTOCPlugin extends Plugin {
     updateCSSVariables() {
         document.body.style.setProperty('--toc-length', this.settings.barLength);
         document.body.style.setProperty('--toc-thickness', `${this.settings.barThickness}px`);
+        document.body.style.setProperty('--toc-dot-size', `${this.settings.dotSize}px`);
+        document.body.style.setProperty('--toc-item-spacing', `${this.settings.itemSpacing}px`);
     }
 
     removeCSS() {
@@ -487,31 +519,72 @@ class InkTOCSettingTab extends PluginSettingTab {
                 .addOption('hollow-horizontal', 'Hollow Horizontal')
                 .addOption('solid-vertical', 'Solid Vertical')
                 .addOption('hollow-vertical', 'Hollow Vertical')
+                .addOption('solid-dot', 'Solid Dot')
+                .addOption('hollow-dot', 'Hollow Dot')
                 .setValue(this.plugin.settings.barStyle)
                 .onChange(async (value) => {
                     this.plugin.settings.barStyle = value;
                     await this.plugin.saveSettings();
+                    this.display();
                 }));
 
+        const isDotStyle = this.plugin.settings.barStyle.includes('dot');
+
+        if (isDotStyle) {
+            new Setting(containerEl)
+                .setName('Dot Size')
+                .setDesc('Adjust the base diameter of the dots.')
+                .addSlider(slider => slider
+                    .setLimits(4, 20, 1)
+                    .setValue(this.plugin.settings.dotSize)
+                    .setDynamicTooltip()
+                    .onChange(async (value) => {
+                        this.plugin.settings.dotSize = value;
+                        await this.plugin.saveSettings();
+                    }));
+        } else {
+            new Setting(containerEl)
+                .setName('Bar Length')
+                .addSlider(slider => slider
+                    .setLimits(0.5, 3.0, 0.1)
+                    .setValue(this.plugin.settings.barLength)
+                    .setDynamicTooltip()
+                    .onChange(async (value) => {
+                        this.plugin.settings.barLength = value;
+                        await this.plugin.saveSettings();
+                    }));
+
+            new Setting(containerEl)
+                .setName('Bar Thickness')
+                .addSlider(slider => slider
+                    .setLimits(1, 10, 1)
+                    .setValue(this.plugin.settings.barThickness)
+                    .setDynamicTooltip()
+                    .onChange(async (value) => {
+                        this.plugin.settings.barThickness = value;
+                        await this.plugin.saveSettings();
+                    }));
+        }
+
         new Setting(containerEl)
-            .setName('Bar Length')
-            .addSlider(slider => slider
-                .setLimits(0.5, 3.0, 0.1)
-                .setValue(this.plugin.settings.barLength)
-                .setDynamicTooltip()
+            .setName('Uniform Item Size')
+            .setDesc('When enabled, all bars and dots will be identical in size regardless of heading level. When disabled, they scale down from H1 to H6.')
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.uniformSize)
                 .onChange(async (value) => {
-                    this.plugin.settings.barLength = value;
+                    this.plugin.settings.uniformSize = value;
                     await this.plugin.saveSettings();
                 }));
 
         new Setting(containerEl)
-            .setName('Bar Thickness')
+            .setName('Item Spacing')
+            .setDesc('Adjust the vertical space between individual bars or dots (minimum 4px).')
             .addSlider(slider => slider
-                .setLimits(1, 10, 1)
-                .setValue(this.plugin.settings.barThickness)
+                .setLimits(4, 20, 1)
+                .setValue(this.plugin.settings.itemSpacing)
                 .setDynamicTooltip()
                 .onChange(async (value) => {
-                    this.plugin.settings.barThickness = value;
+                    this.plugin.settings.itemSpacing = value;
                     await this.plugin.saveSettings();
                 }));
 
@@ -551,7 +624,7 @@ class InkTOCSettingTab extends PluginSettingTab {
                         }));
             }
         }
-        
+
         containerEl.createEl('br');
         containerEl.createEl('hr');
         containerEl.createEl('br');
@@ -560,8 +633,8 @@ class InkTOCSettingTab extends PluginSettingTab {
         supportDiv.style.textAlign = 'center';
         supportDiv.style.marginTop = '20px';
         supportDiv.style.marginBottom = '20px';
-        
-        supportDiv.createEl('p', { 
+
+        supportDiv.createEl('p', {
             text: 'If you enjoy using Ink Floating TOC, consider supporting its development! ☕️',
             attr: { style: 'margin-bottom: 15px; opacity: 0.8;' }
         });
@@ -569,14 +642,14 @@ class InkTOCSettingTab extends PluginSettingTab {
         const kofiLink = supportDiv.createEl('a', {
             href: 'https://ko-fi.com/jayantakumardas'
         });
-        
+
         const kofiImg = kofiLink.createEl('img', {
             attr: {
                 src: 'https://ko-fi.com/img/githubbutton_sm.svg',
                 alt: 'Support me on Ko-fi'
             }
         });
-        kofiImg.style.height = '36px'; 
+        kofiImg.style.height = '36px';
     }
 }
 
