@@ -2,7 +2,7 @@
 
 ![image](Assets/Screenshot.png)
 
-Support Jayanta
+Support dsvictor
 <p align="left">
   <a href="https://ko-fi.com/jayantakumardas" target="_blank">
     <img src="https://img.shields.io/badge/Support%20me%20on-Ko--fi-F16061?logo=ko-fi&logoColor=white&style=flat-square" alt="Support me on Ko-fi">
