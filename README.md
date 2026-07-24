@@ -4,10 +4,10 @@
 
 Support Jayanta
 <p align="left">
-  <a href="https://ko-fi.com/YOUR_KOFI_USERNAME" target="_blank">
+  <a href="https://ko-fi.com/jayantakumardas" target="_blank">
     <img src="https://img.shields.io/badge/Support%20me%20on-Ko--fi-F16061?logo=ko-fi&logoColor=white&style=flat-square" alt="Support me on Ko-fi">
   </a>
-  <a href="https://paypal.me/YOUR_PAYPAL_USERNAME" target="_blank">
+  <a href="https://paypal.me/JKustomDesign" target="_blank">
     <img src="https://img.shields.io/badge/Donate-PayPal-00457C?logo=paypal&logoColor=white&style=flat-square" alt="Donate via PayPal">
   </a>
 </p>
