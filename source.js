@@ -70,15 +70,20 @@ class InkFloatingTOCPlugin extends Plugin {
     }
 
     refreshTOC() {
-        this.removeTOC();
-
         const leaf = this.app.workspace.activeLeaf || this.app.workspace.getMostRecentLeaf();
-        if (!leaf || !leaf.view) return;
+
+        if (!leaf || !leaf.view) {
+          this.removeTOC();
+          return;
+        }
 
         const view = leaf.view;
         const viewType = view.getViewType();
+        if (viewType !== 'markdown' && viewType !== 'empty') {
+          return;
+        }
 
-        if (viewType !== 'markdown' && viewType !== 'empty') return;
+        this.removeTOC();
 
         const file = view.file;
         let headings = [];
@@ -108,6 +113,12 @@ class InkFloatingTOCPlugin extends Plugin {
 
         const list = document.createElement('div');
         list.classList.add('ink-toc-list');
+
+        const scrollUp = document.createElement('div');
+        scrollUp.classList.add('ink-toc-scroll-indicator', 'ink-toc-scroll-up');
+
+        const scrollDown = document.createElement('div');
+        scrollDown.classList.add('ink-toc-scroll-indicator', 'ink-toc-scroll-down');
 
         if (headings.length === 0) {
             const item = document.createElement('div');
@@ -180,7 +191,29 @@ class InkFloatingTOCPlugin extends Plugin {
             });
         }
 
+        container.appendChild(scrollUp);
         container.appendChild(list);
+        container.appendChild(scrollDown);
+
+        const updateScrollIndicators = () => {
+            const { scrollTop, scrollHeight, clientHeight } = list;
+
+            if (scrollTop > 0) {
+                scrollUp.classList.add('is-visible');
+            } else {
+                scrollUp.classList.remove('is-visible');
+            }
+
+            if (scrollHeight > clientHeight && (scrollTop + clientHeight) < (scrollHeight - 10)) {
+                scrollDown.classList.add('is-visible');
+            } else {
+                scrollDown.classList.remove('is-visible');
+            }
+        };
+
+        list.addEventListener('scroll', updateScrollIndicators);
+
+        setTimeout(updateScrollIndicators, 50);
 
         const rootEl = view.contentEl || view.containerEl;
         const sView = rootEl.querySelector('.markdown-source-view');
@@ -299,7 +332,52 @@ class InkFloatingTOCPlugin extends Plugin {
                 height: auto;
             }
 
-            /* Strict Horizontal Anchoring */
+            .ink-toc-scroll-indicator {
+                width: 10px;
+                height: 10px;
+                background-color: var(--text-muted);
+                opacity: 0;
+                transition: opacity 0.3s ease-out;
+                flex-shrink: 0;
+                pointer-events: none;
+                margin: 6px 0;
+
+                -webkit-mask-size: contain;
+                -webkit-mask-repeat: no-repeat;
+                -webkit-mask-position: center;
+                mask-size: contain;
+                mask-repeat: no-repeat;
+                mask-position: center;
+            }
+
+            .ink-toc-scroll-indicator.is-visible {
+                opacity: 0.4;
+            }
+
+            .ink-toc-scroll-up {
+                -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='352 256 26 25'%3E%3Cpath d='M364.574202,279.711806 C353.751102,279.711806 352.190302,276.850306 357.601902,266.929106 C363.013402,257.008006 366.135102,257.008006 371.546602,266.929106 C376.958102,276.850306 375.397302,279.711806 364.574202,279.711806 Z'/%3E%3C/svg%3E");
+                mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='352 256 26 25'%3E%3Cpath d='M364.574202,279.711806 C353.751102,279.711806 352.190302,276.850306 357.601902,266.929106 C363.013402,257.008006 366.135102,257.008006 371.546602,266.929106 C376.958102,276.850306 375.397302,279.711806 364.574202,279.711806 Z'/%3E%3C/svg%3E");
+
+                transform: none;
+            }
+
+            .ink-toc-scroll-down {
+                -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='352 256 26 25'%3E%3Cpath d='M364.574202,279.711806 C353.751102,279.711806 352.190302,276.850306 357.601902,266.929106 C363.013402,257.008006 366.135102,257.008006 371.546602,266.929106 C376.958102,276.850306 375.397302,279.711806 364.574202,279.711806 Z'/%3E%3C/svg%3E");
+                mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='352 256 26 25'%3E%3Cpath d='M364.574202,279.711806 C353.751102,279.711806 352.190302,276.850306 357.601902,266.929106 C363.013402,257.008006 366.135102,257.008006 371.546602,266.929106 C376.958102,276.850306 375.397302,279.711806 364.574202,279.711806 Z'/%3E%3C/svg%3E");
+
+                transform: rotate(180deg);
+            }
+
+            .ink-toc-container.pos-h-left .ink-toc-scroll-indicator {
+                align-self: flex-start;
+                margin-left: calc((var(--toc-thickness, 2px) / 2) - 5px);
+            }
+
+            .ink-toc-container.pos-h-right .ink-toc-scroll-indicator {
+                align-self: flex-end;
+                margin-right: calc((var(--toc-thickness, 2px) / 2) - 5px);
+            }
+
             .ink-toc-container.pos-h-left { left: 20px; right: auto; }
             .ink-toc-container.pos-h-right { right: 20px; left: auto; }
 
@@ -378,7 +456,6 @@ class InkFloatingTOCPlugin extends Plugin {
                 opacity: 1;
             }
 
-            /* Style: Solid Horizontal */
             .ink-toc-item.style-solid-horizontal .ink-toc-bar {
                 height: var(--toc-thickness, 2px);
                 width: calc(24px * var(--toc-length, 1) / var(--item-level, 1));
@@ -387,7 +464,6 @@ class InkFloatingTOCPlugin extends Plugin {
                 border-radius: 50px;
             }
 
-            /* Style: Hollow Horizontal */
             .ink-toc-item.style-hollow-horizontal .ink-toc-bar {
                 height: var(--toc-thickness, 2px);
                 width: calc(24px * var(--toc-length, 1) / var(--item-level, 1));
@@ -398,7 +474,6 @@ class InkFloatingTOCPlugin extends Plugin {
                 box-sizing: border-box;
             }
 
-            /* Style: Solid Vertical */
             .ink-toc-item.style-solid-vertical .ink-toc-bar {
                 width: var(--toc-thickness, 2px);
                 height: calc(24px * var(--toc-length, 1) / var(--item-level, 1));
@@ -407,7 +482,6 @@ class InkFloatingTOCPlugin extends Plugin {
                 border-radius: 50px;
             }
 
-            /* Style: Hollow Vertical */
             .ink-toc-item.style-hollow-vertical .ink-toc-bar {
                 width: var(--toc-thickness, 2px);
                 height: calc(24px * var(--toc-length, 1) / var(--item-level, 1));
@@ -418,7 +492,6 @@ class InkFloatingTOCPlugin extends Plugin {
                 box-sizing: border-box;
             }
 
-            /* Style: Solid Dot */
             .ink-toc-item.style-solid-dot .ink-toc-bar {
                 width: calc(var(--toc-dot-size, 8px) / var(--item-level, 1));
                 height: calc(var(--toc-dot-size, 8px) / var(--item-level, 1));
@@ -427,7 +500,6 @@ class InkFloatingTOCPlugin extends Plugin {
                 border-radius: 50%;
             }
 
-            /* Style: Hollow Dot */
             .ink-toc-item.style-hollow-dot .ink-toc-bar {
                 width: calc(var(--toc-dot-size, 8px) / var(--item-level, 1));
                 height: calc(var(--toc-dot-size, 8px) / var(--item-level, 1));
@@ -445,7 +517,6 @@ class InkFloatingTOCPlugin extends Plugin {
             .ink-toc-item[data-level="5"] { --item-level: 2.2; }
             .ink-toc-item[data-level="6"] { --item-level: 2.8; }
 
-            /* UPDATED: Universal Uniform Size override for all bar & dot styles */
             .ink-toc-container.uniform-size .ink-toc-item[data-level] {
                 --item-level: 1 !important;
             }
