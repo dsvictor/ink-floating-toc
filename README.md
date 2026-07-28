@@ -9,13 +9,8 @@ Support dsvictor
   </a>
 </p>
 
-![image](Assets/Screenshot.png)
-|![](Assets/02.png)|![](Assets/Tablet.png)|
+|![](Assets/02.png)|![](Assets/01.png)|
 | ----------- | --- |
-|![](assets/Phone.png)|![](assets/01.png)|
-| ![](assets/02.png) | ![](assets/03.png)|
-|![](assets/04.png) | ![](assets/05.png)
-
 
 **Ink Floating TOC** is a sleek, highly customizable, and unobtrusive Table of Contents plugin for Obsidian. Designed for users who want quick document navigation without sacrificing screen real estate or aesthetic appeal, it replaces bulky text lists with an elegant, interactive visual bar system.
 
