@@ -9,10 +9,15 @@ const {
 const DEFAULT_SETTINGS = {
     horizontalPos: 'left',
     verticalPos: 'middle',
+    alignment: 'left',
+    showBackground: false,
+    bgStyle: 'glass',
+    bgOpacity: 10,
+    bgColor: '',
     barStyle: 'solid-horizontal',
     barLength: 1.0,
-    barThickness: 2,
-    dotSize: 8,
+    barThickness: 1,
+    dotSize: 3,
     uniformSize: false,
     itemSpacing: 6,
     enableTooltip: true,
@@ -28,7 +33,6 @@ const DEFAULT_SETTINGS = {
 
 class InkFloatingTOCPlugin extends Plugin {
     async onload() {
-
         if (Platform.isPhone) {
             console.log('Ink Floating TOC disabled on phones');
             return;
@@ -67,20 +71,25 @@ class InkFloatingTOCPlugin extends Plugin {
     removeTOC() {
         const existing = document.querySelectorAll('.ink-toc-container');
         existing.forEach(el => el.remove());
+
+        document.querySelectorAll('.ink-toc-active-left, .ink-toc-active-right').forEach(el => {
+            el.classList.remove('ink-toc-active-left', 'ink-toc-active-right');
+        });
     }
 
     refreshTOC() {
         const leaf = this.app.workspace.activeLeaf || this.app.workspace.getMostRecentLeaf();
 
         if (!leaf || !leaf.view) {
-          this.removeTOC();
-          return;
+            this.removeTOC();
+            return;
         }
 
         const view = leaf.view;
         const viewType = view.getViewType();
+
         if (viewType !== 'markdown' && viewType !== 'empty') {
-          return;
+            return;
         }
 
         this.removeTOC();
@@ -101,7 +110,13 @@ class InkFloatingTOCPlugin extends Plugin {
         const tooltipPos = this.settings.horizontalPos === 'right' ? 'left' : 'right';
 
         const container = document.createElement('div');
-        container.classList.add('ink-toc-container', `pos-h-${this.settings.horizontalPos}`, `pos-v-${this.settings.verticalPos}`);
+        container.classList.add(
+            'ink-toc-container',
+            `pos-h-${this.settings.horizontalPos}`,
+            `pos-v-${this.settings.verticalPos}`,
+            `active-style-${this.settings.barStyle}`,
+            `align-${this.settings.alignment}`
+        );
 
         if (viewType === 'empty') {
             container.classList.add('is-empty-tab');
@@ -111,8 +126,12 @@ class InkFloatingTOCPlugin extends Plugin {
             container.classList.add('uniform-size');
         }
 
-        const list = document.createElement('div');
-        list.classList.add('ink-toc-list');
+        if (this.settings.showBackground) {
+            container.classList.add('has-background', `bg-style-${this.settings.bgStyle}`);
+        }
+
+        const rootEl = view.contentEl || view.containerEl;
+        rootEl.classList.add(`ink-toc-active-${this.settings.horizontalPos}`);
 
         const scrollUp = document.createElement('div');
         scrollUp.classList.add('ink-toc-scroll-indicator', 'ink-toc-scroll-up');
@@ -120,13 +139,14 @@ class InkFloatingTOCPlugin extends Plugin {
         const scrollDown = document.createElement('div');
         scrollDown.classList.add('ink-toc-scroll-indicator', 'ink-toc-scroll-down');
 
+        const list = document.createElement('div');
+        list.classList.add('ink-toc-list');
+
         if (headings.length === 0) {
             const item = document.createElement('div');
             item.classList.add('ink-toc-item', `style-${this.settings.barStyle}`, 'toc-empty-state');
-
             item.setAttribute('data-level', '1');
             item.dataset.level = "1";
-
             item.style.setProperty('--item-color', 'var(--text-muted)');
 
             const bar = document.createElement('div');
@@ -150,7 +170,6 @@ class InkFloatingTOCPlugin extends Plugin {
             item.appendChild(anchor);
             list.appendChild(item);
         } else {
-
             headings.forEach((heading, index) => {
                 const item = document.createElement('div');
                 item.classList.add('ink-toc-item', `style-${this.settings.barStyle}`);
@@ -195,27 +214,6 @@ class InkFloatingTOCPlugin extends Plugin {
         container.appendChild(list);
         container.appendChild(scrollDown);
 
-        const updateScrollIndicators = () => {
-            const { scrollTop, scrollHeight, clientHeight } = list;
-
-            if (scrollTop > 0) {
-                scrollUp.classList.add('is-visible');
-            } else {
-                scrollUp.classList.remove('is-visible');
-            }
-
-            if (scrollHeight > clientHeight && (scrollTop + clientHeight) < (scrollHeight - 10)) {
-                scrollDown.classList.add('is-visible');
-            } else {
-                scrollDown.classList.remove('is-visible');
-            }
-        };
-
-        list.addEventListener('scroll', updateScrollIndicators);
-
-        setTimeout(updateScrollIndicators, 50);
-
-        const rootEl = view.contentEl || view.containerEl;
         const sView = rootEl.querySelector('.markdown-source-view');
         const rView = rootEl.querySelector('.markdown-reading-view');
 
@@ -226,6 +224,40 @@ class InkFloatingTOCPlugin extends Plugin {
         } else {
             rootEl.appendChild(container);
         }
+
+        const updateScrollIndicators = () => {
+            const { scrollTop, scrollHeight, clientHeight } = list;
+
+            const isScrollable = scrollHeight > (clientHeight + 15);
+
+            if (isScrollable && scrollTop > 5) {
+                scrollUp.classList.add('is-visible');
+            } else {
+                scrollUp.classList.remove('is-visible');
+            }
+
+            const distanceToBottom = scrollHeight - (scrollTop + clientHeight);
+
+            if (isScrollable && distanceToBottom > 15) {
+                scrollDown.classList.add('is-visible');
+            } else {
+                scrollDown.classList.remove('is-visible');
+            }
+
+            if (isScrollable) {
+                list.style.overflowY = 'auto';
+            } else {
+                list.style.overflowY = 'hidden';
+                if (scrollTop > 0) list.scrollTop = 0;
+            }
+        };
+
+        list.addEventListener('scroll', updateScrollIndicators);
+
+        const resizeObserver = new ResizeObserver(() => updateScrollIndicators());
+        resizeObserver.observe(container);
+
+        setTimeout(updateScrollIndicators, 50);
     }
 
     handleItemClick(e, view, item, list) {
@@ -327,70 +359,33 @@ class InkFloatingTOCPlugin extends Plugin {
                 flex-direction: column;
 
                 --toc-offset-d: 44px;
-                top: calc(12.5% - (0.875 * var(--toc-offset-d)));
-                bottom: calc(12.5% + (0.125 * var(--toc-offset-d)));
-                height: auto;
-            }
-
-            .ink-toc-scroll-indicator {
-                width: 10px;
-                height: 10px;
-                background-color: var(--text-muted);
-                opacity: 0;
-                transition: opacity 0.3s ease-out;
-                flex-shrink: 0;
-                pointer-events: none;
-                margin: 6px 0;
-
-                -webkit-mask-size: contain;
-                -webkit-mask-repeat: no-repeat;
-                -webkit-mask-position: center;
-                mask-size: contain;
-                mask-repeat: no-repeat;
-                mask-position: center;
-            }
-
-            .ink-toc-scroll-indicator.is-visible {
-                opacity: 0.4;
-            }
-
-            .ink-toc-scroll-up {
-                -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='352 256 26 25'%3E%3Cpath d='M364.574202,279.711806 C353.751102,279.711806 352.190302,276.850306 357.601902,266.929106 C363.013402,257.008006 366.135102,257.008006 371.546602,266.929106 C376.958102,276.850306 375.397302,279.711806 364.574202,279.711806 Z'/%3E%3C/svg%3E");
-                mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='352 256 26 25'%3E%3Cpath d='M364.574202,279.711806 C353.751102,279.711806 352.190302,276.850306 357.601902,266.929106 C363.013402,257.008006 366.135102,257.008006 371.546602,266.929106 C376.958102,276.850306 375.397302,279.711806 364.574202,279.711806 Z'/%3E%3C/svg%3E");
-
-                transform: none;
-            }
-
-            .ink-toc-scroll-down {
-                -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='352 256 26 25'%3E%3Cpath d='M364.574202,279.711806 C353.751102,279.711806 352.190302,276.850306 357.601902,266.929106 C363.013402,257.008006 366.135102,257.008006 371.546602,266.929106 C376.958102,276.850306 375.397302,279.711806 364.574202,279.711806 Z'/%3E%3C/svg%3E");
-                mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='352 256 26 25'%3E%3Cpath d='M364.574202,279.711806 C353.751102,279.711806 352.190302,276.850306 357.601902,266.929106 C363.013402,257.008006 366.135102,257.008006 371.546602,266.929106 C376.958102,276.850306 375.397302,279.711806 364.574202,279.711806 Z'/%3E%3C/svg%3E");
-
-                transform: rotate(180deg);
-            }
-
-            .ink-toc-container.pos-h-left .ink-toc-scroll-indicator {
-                align-self: flex-start;
-                margin-left: calc((var(--toc-thickness, 2px) / 2) - 5px);
-            }
-
-            .ink-toc-container.pos-h-right .ink-toc-scroll-indicator {
-                align-self: flex-end;
-                margin-right: calc((var(--toc-thickness, 2px) / 2) - 5px);
+                max-height: calc(75% + 33px);
             }
 
             .ink-toc-container.pos-h-left { left: 20px; right: auto; }
             .ink-toc-container.pos-h-right { right: 20px; left: auto; }
 
-            .ink-toc-container.pos-v-top { justify-content: flex-start; }
-            .ink-toc-container.pos-v-middle { justify-content: center; }
-            .ink-toc-container.pos-v-bottom { justify-content: flex-end; }
+            .ink-toc-container.pos-v-top {
+                top: calc(12.5% - (0.875 * var(--toc-offset-d)));
+            }
+
+            .ink-toc-container.pos-v-middle {
+                top: calc(50% - (var(--toc-offset-d) / 2));
+                transform: translateY(-50%);
+            }
+
+            .ink-toc-container.pos-v-bottom {
+                bottom: calc(12.5% + (0.125 * var(--toc-offset-d)));
+            }
 
             .ink-toc-list {
                 display: flex;
                 flex-direction: column;
                 gap: max(4px, var(--toc-item-spacing, 6px));
                 pointer-events: auto;
-                align-items: flex-start;
+
+                padding: 0 20px;
+                margin: 0 -20px;
 
                 max-height: 100%;
                 overflow-y: auto;
@@ -402,6 +397,10 @@ class InkFloatingTOCPlugin extends Plugin {
                 user-select: none;
             }
 
+            .ink-toc-container.align-left .ink-toc-list { align-items: flex-start; }
+            .ink-toc-container.align-middle .ink-toc-list { align-items: center; }
+            .ink-toc-container.align-right .ink-toc-list { align-items: flex-end; }
+
             .ink-toc-list::-webkit-scrollbar {
                 display: none;
             }
@@ -409,6 +408,10 @@ class InkFloatingTOCPlugin extends Plugin {
             .ink-toc-container.pos-h-right .ink-toc-list {
                 align-items: flex-end;
             }
+
+            .ink-toc-container.pos-h-right.align-left .ink-toc-list { align-items: flex-start; }
+            .ink-toc-container.pos-h-right.align-middle .ink-toc-list { align-items: center; }
+            .ink-toc-container.pos-h-right.align-right .ink-toc-list { align-items: flex-end; }
 
             .ink-toc-item {
                 display: flex;
@@ -438,19 +441,26 @@ class InkFloatingTOCPlugin extends Plugin {
                 --item-level: 1 !important;
             }
 
-            .ink-toc-item.toc-empty-state:hover {
-                opacity: 0.5;
-            }
+            .ink-toc-item.toc-empty-state:hover { opacity: 0.5; }
 
             .ink-toc-indicator {
-                width: 6px;
-                height: 6px;
+                position: absolute;
+                width: 4px;
+                height: 4px;
                 border-radius: 50px;
                 background-color: var(--item-color);
-                margin: 0 4px;
                 opacity: 0;
                 transition: opacity 0.2s;
+
+                top: 50%;
+                transform: translateY(-50%);
             }
+
+            .ink-toc-container.pos-h-left .ink-toc-indicator { right: calc(100% + 6px); }
+            .ink-toc-container.pos-h-right .ink-toc-indicator { left: calc(100% + 6px); }
+
+            .ink-toc-container.has-background.pos-h-left .ink-toc-indicator { right: calc(100% + 12px); }
+            .ink-toc-container.has-background.pos-h-right .ink-toc-indicator { left: calc(100% + 12px); }
 
             .ink-toc-item[data-collapsed="true"] .ink-toc-indicator {
                 opacity: 1;
@@ -520,6 +530,114 @@ class InkFloatingTOCPlugin extends Plugin {
             .ink-toc-container.uniform-size .ink-toc-item[data-level] {
                 --item-level: 1 !important;
             }
+
+            .ink-toc-scroll-indicator {
+                width: 10px;
+                height: 10px;
+                background-color: var(--text-muted);
+                opacity: 0;
+                transition: opacity 0.3s ease-out;
+                flex-shrink: 0;
+                pointer-events: none;
+                margin: 6px 0;
+
+                -webkit-mask-size: contain;
+                -webkit-mask-repeat: no-repeat;
+                -webkit-mask-position: center;
+                mask-size: contain;
+                mask-repeat: no-repeat;
+                mask-position: center;
+            }
+
+            .ink-toc-scroll-up {
+                -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='352 256 26 25'%3E%3Cpath d='M364.574202,279.711806 C353.751102,279.711806 352.190302,276.850306 357.601902,266.929106 C363.013402,257.008006 366.135102,257.008006 371.546602,266.929106 C376.958102,276.850306 375.397302,279.711806 364.574202,279.711806 Z'/%3E%3C/svg%3E");
+                mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='352 256 26 25'%3E%3Cpath d='M364.574202,279.711806 C353.751102,279.711806 352.190302,276.850306 357.601902,266.929106 C363.013402,257.008006 366.135102,257.008006 371.546602,266.929106 C376.958102,276.850306 375.397302,279.711806 364.574202,279.711806 Z'/%3E%3C/svg%3E");
+                transform: none;
+            }
+
+            .ink-toc-scroll-down {
+                -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='352 256 26 25'%3E%3Cpath d='M364.574202,279.711806 C353.751102,279.711806 352.190302,276.850306 357.601902,266.929106 C363.013402,257.008006 366.135102,257.008006 371.546602,266.929106 C376.958102,276.850306 375.397302,279.711806 364.574202,279.711806 Z'/%3E%3C/svg%3E");
+                mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='352 256 26 25'%3E%3Cpath d='M364.574202,279.711806 C353.751102,279.711806 352.190302,276.850306 357.601902,266.929106 C363.013402,257.008006 366.135102,257.008006 371.546602,266.929106 C376.958102,276.850306 375.397302,279.711806 364.574202,279.711806 Z'/%3E%3C/svg%3E");
+                transform: rotate(180deg);
+            }
+
+            .ink-toc-scroll-indicator.is-visible {
+                opacity: 0.4;
+            }
+
+            .ink-toc-container.pos-h-left .ink-toc-scroll-indicator {
+                align-self: flex-start;
+                margin-left: calc((var(--toc-thickness, 2px) / 2) - 5px);
+            }
+
+            .ink-toc-container.pos-h-right .ink-toc-scroll-indicator {
+                align-self: flex-end;
+                margin-right: calc((var(--toc-thickness, 2px) / 2) - 5px);
+            }
+
+            .ink-toc-container.active-style-solid-dot.pos-h-left .ink-toc-scroll-indicator,
+            .ink-toc-container.active-style-hollow-dot.pos-h-left .ink-toc-scroll-indicator {
+                margin-left: calc((var(--toc-dot-size, 8px) / 2) - 5px);
+            }
+
+            .ink-toc-container.active-style-solid-dot.pos-h-right .ink-toc-scroll-indicator,
+            .ink-toc-container.active-style-hollow-dot.pos-h-right .ink-toc-scroll-indicator {
+                margin-right: calc((var(--toc-dot-size, 8px) / 2) - 5px);
+            }
+
+            .ink-toc-container.has-background {
+                border-radius: 50px;
+                padding: 10px 0;
+                border: none;
+            }
+            .ink-toc-container.active-style-solid-horizontal.has-background,
+            .ink-toc-container.active-style-hollow-horizontal.has-background {
+                border-radius: 12px;
+            }
+            .ink-toc-container.has-background .ink-toc-list {
+                padding: 0 22px;
+                margin: 0 -14px;
+            }
+            .ink-toc-container.has-background .ink-toc-scroll-indicator {
+                align-self: center !important;
+                margin-left: 0 !important;
+                margin-right: 0 !important;
+            }
+
+            .ink-toc-container.bg-style-solid {
+                background-color: color-mix(in srgb, var(--toc-bg-color) var(--toc-bg-opacity), transparent);
+                border: 2px solid var(--background-modifier-border);
+            }
+
+            .ink-toc-container.bg-style-glass {
+                background-color: color-mix(in srgb, var(--toc-bg-color) var(--toc-bg-opacity), transparent);
+                backdrop-filter: blur(16px) saturate(150%);
+                -webkit-backdrop-filter: blur(16px) saturate(150%);
+            }
+
+            .theme-light .ink-toc-container.bg-style-glass {
+                border: 1px solid rgba(0, 0, 0, 0.08);
+                box-shadow:
+                    2px 4px 12px rgba(0, 0, 0, 0.06),
+                    inset 1.5px 0 0 rgba(255, 255, 255, 0.7);
+            }
+
+            .theme-dark .ink-toc-container.bg-style-glass {
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                box-shadow:
+                    2px 4px 12px rgba(0, 0, 0, 0.4),
+                    inset 1.5px 0 0 rgba(255, 255, 255, 0.12);
+            }
+
+            .ink-toc-active-left .markdown-source-view:not(.is-readable-line-width) .cm-scroller,
+            .ink-toc-active-left .markdown-reading-view:not(.is-readable-line-width) .markdown-preview-view {
+                padding-left: var(--toc-overlap-padding, 80px) !important;
+            }
+
+            .ink-toc-active-right .markdown-source-view:not(.is-readable-line-width) .cm-scroller,
+            .ink-toc-active-right .markdown-reading-view:not(.is-readable-line-width) .markdown-preview-view {
+                padding-right: var(--toc-overlap-padding, 80px) !important;
+            }
         `;
         document.head.appendChild(style);
         this.updateCSSVariables();
@@ -527,9 +645,23 @@ class InkFloatingTOCPlugin extends Plugin {
 
     updateCSSVariables() {
         document.body.style.setProperty('--toc-length', this.settings.barLength);
-        document.body.style.setProperty('--toc-thickness', `${this.settings.barThickness}px`);
-        document.body.style.setProperty('--toc-dot-size', `${this.settings.dotSize}px`);
+
+        const mappedThickness = this.settings.barThickness + 2;
+        document.body.style.setProperty('--toc-thickness', `${mappedThickness}px`);
+
+        const mappedDotSize = this.settings.dotSize + 5;
+        document.body.style.setProperty('--toc-dot-size', `${mappedDotSize}px`);
+
         document.body.style.setProperty('--toc-item-spacing', `${this.settings.itemSpacing}px`);
+
+        document.body.style.setProperty('--toc-bg-opacity', `${this.settings.bgOpacity}%`);
+
+        const effectiveBgColor = this.settings.bgColor ? this.settings.bgColor : 'var(--background-secondary)';
+        document.body.style.setProperty('--toc-bg-color', effectiveBgColor);
+
+        const isHorizontal = this.settings.barStyle.includes('horizontal');
+        const paddingValue = isHorizontal ? `calc(60px + (24px * ${this.settings.barLength}))` : '80px';
+        document.body.style.setProperty('--toc-overlap-padding', paddingValue);
     }
 
     removeCSS() {
@@ -548,6 +680,7 @@ class InkTOCSettingTab extends PluginSettingTab {
         const { containerEl } = this;
         containerEl.empty();
         containerEl.createEl('h2', { text: 'Ink Floating TOC Settings' });
+
 
         new Setting(containerEl)
             .setName('Horizontal Position')
@@ -572,16 +705,25 @@ class InkTOCSettingTab extends PluginSettingTab {
                     await this.plugin.saveSettings();
                 }));
 
-        new Setting(containerEl)
-            .setName('Hide Specific Headings')
-            .setDesc('Enter heading levels to hide, separated by commas (e.g. h3, h4).')
-            .addText(text => text
-                .setPlaceholder('e.g. h3, h4')
-                .setValue(this.plugin.settings.hiddenHeadings)
-                .onChange(async (value) => {
-                    this.plugin.settings.hiddenHeadings = value;
-                    await this.plugin.saveSettings();
-                }));
+        const isHorizontalStyle = this.plugin.settings.barStyle.includes('horizontal');
+        const isDotStyle = this.plugin.settings.barStyle.includes('dot');
+
+        if (isHorizontalStyle || isDotStyle) {
+            new Setting(containerEl)
+                .setName('Item Alignment')
+                .setDesc('Align items to the left, middle, or right within the container.')
+                .addDropdown(drop => drop
+                    .addOption('left', 'Left')
+                    .addOption('middle', 'Middle')
+                    .addOption('right', 'Right')
+                    .setValue(this.plugin.settings.alignment)
+                    .onChange(async (value) => {
+                        this.plugin.settings.alignment = value;
+                        await this.plugin.saveSettings();
+                    }));
+        }
+
+        containerEl.createEl('br');
 
         new Setting(containerEl)
             .setName('Bar Style')
@@ -599,14 +741,12 @@ class InkTOCSettingTab extends PluginSettingTab {
                     this.display();
                 }));
 
-        const isDotStyle = this.plugin.settings.barStyle.includes('dot');
-
         if (isDotStyle) {
             new Setting(containerEl)
                 .setName('Dot Size')
-                .setDesc('Adjust the base diameter of the dots.')
+                .setDesc('Adjust the base diameter of the dots (Scale 1-5).')
                 .addSlider(slider => slider
-                    .setLimits(4, 20, 1)
+                    .setLimits(1, 5, 1)
                     .setValue(this.plugin.settings.dotSize)
                     .setDynamicTooltip()
                     .onChange(async (value) => {
@@ -617,7 +757,7 @@ class InkTOCSettingTab extends PluginSettingTab {
             new Setting(containerEl)
                 .setName('Bar Length')
                 .addSlider(slider => slider
-                    .setLimits(0.5, 3.0, 0.1)
+                    .setLimits(1.0, 2.0, 0.1)
                     .setValue(this.plugin.settings.barLength)
                     .setDynamicTooltip()
                     .onChange(async (value) => {
@@ -627,8 +767,9 @@ class InkTOCSettingTab extends PluginSettingTab {
 
             new Setting(containerEl)
                 .setName('Bar Thickness')
+                .setDesc('Adjust the thickness of the bars (Scale 1-3).')
                 .addSlider(slider => slider
-                    .setLimits(1, 10, 1)
+                    .setLimits(1, 3, 1)
                     .setValue(this.plugin.settings.barThickness)
                     .setDynamicTooltip()
                     .onChange(async (value) => {
@@ -660,16 +801,6 @@ class InkTOCSettingTab extends PluginSettingTab {
                 }));
 
         new Setting(containerEl)
-            .setName('Enable Tooltip')
-            .setDesc('Show heading name when hovering over the bar')
-            .addToggle(toggle => toggle
-                .setValue(this.plugin.settings.enableTooltip)
-                .onChange(async (value) => {
-                    this.plugin.settings.enableTooltip = value;
-                    await this.plugin.saveSettings();
-                }));
-
-        new Setting(containerEl)
             .setName('Monochrome Bar')
             .setDesc('Use native text colors for a clean look that adapts to Light/Dark mode automatically.')
             .addToggle(toggle => toggle
@@ -681,8 +812,6 @@ class InkTOCSettingTab extends PluginSettingTab {
                 }));
 
         if (!this.plugin.settings.useMonochrome) {
-            containerEl.createEl('h3', { text: 'Heading Colors' });
-
             for (let i = 1; i <= 6; i++) {
                 const key = `h${i}Color`;
                 new Setting(containerEl)
@@ -695,6 +824,92 @@ class InkTOCSettingTab extends PluginSettingTab {
                         }));
             }
         }
+
+        containerEl.createEl('br');
+
+        new Setting(containerEl)
+            .setName('TOC Background')
+            .setDesc('Display a rounded background container behind the TOC.')
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.showBackground)
+                .onChange(async (value) => {
+                    this.plugin.settings.showBackground = value;
+                    await this.plugin.saveSettings();
+                    this.display();
+                }));
+
+        if (this.plugin.settings.showBackground) {
+            new Setting(containerEl)
+                .setName('Background Style')
+                .setDesc('Choose between a frosted glass or a flat solid color background.')
+                .addDropdown(drop => drop
+                    .addOption('glass', 'Glass')
+                    .addOption('solid', 'Solid Color')
+                    .setValue(this.plugin.settings.bgStyle)
+                    .onChange(async (value) => {
+                        this.plugin.settings.bgStyle = value;
+                        await this.plugin.saveSettings();
+                        this.display();
+                    }));
+
+            new Setting(containerEl)
+                .setName('TOC Background Opacity')
+                .setDesc('Adjust the transparency of the background track (0 = perfectly transparent).')
+                .addSlider(slider => slider
+                    .setLimits(0, 100, 1)
+                    .setValue(this.plugin.settings.bgOpacity)
+                    .setDynamicTooltip()
+                    .onChange(async (value) => {
+                        this.plugin.settings.bgOpacity = value;
+                        await this.plugin.saveSettings();
+                    }));
+
+            if (this.plugin.settings.bgStyle === 'solid') {
+                const colorSetting = new Setting(containerEl)
+                    .setName('TOC Background Color')
+                    .setDesc('Select the base color for the solid background track. Click reset to restore the adaptive theme default.')
+                    .addColorPicker(color => color
+                        .setValue(this.plugin.settings.bgColor || '#000000')
+                        .onChange(async (value) => {
+                            this.plugin.settings.bgColor = value;
+                            await this.plugin.saveSettings();
+                        }));
+
+                colorSetting.addExtraButton(button => button
+                    .setIcon('rotate-ccw')
+                    .setTooltip('Reset to adaptive theme default')
+                    .onClick(async () => {
+                        this.plugin.settings.bgColor = '';
+                        await this.plugin.saveSettings();
+                        this.display();
+                    })
+                );
+            }
+        }
+
+        containerEl.createEl('br');
+
+        new Setting(containerEl)
+            .setName('Hide Specific Headings')
+            .setDesc('Enter heading levels to hide, separated by commas (e.g. h3, h4).')
+            .addText(text => text
+                .setPlaceholder('e.g. h3, h4')
+                .setValue(this.plugin.settings.hiddenHeadings)
+                .onChange(async (value) => {
+                    this.plugin.settings.hiddenHeadings = value;
+                    await this.plugin.saveSettings();
+                }));
+
+        new Setting(containerEl)
+            .setName('Enable Tooltip')
+            .setDesc('Show heading name when hovering over the bar')
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.enableTooltip)
+                .onChange(async (value) => {
+                    this.plugin.settings.enableTooltip = value;
+                    await this.plugin.saveSettings();
+                }));
+
 
         containerEl.createEl('br');
         containerEl.createEl('hr');
