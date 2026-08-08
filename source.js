@@ -962,6 +962,7 @@ class InkTOCSettingTab extends PluginSettingTab {
         containerEl.empty();
         containerEl.createEl('h2', { text: 'Ink Floating TOC Settings' });
 
+        // --- POSITION SETTINGS ---
         new Setting(containerEl)
             .setName('Horizontal Position')
             .addDropdown(drop => drop
@@ -985,27 +986,23 @@ class InkTOCSettingTab extends PluginSettingTab {
                     await this.plugin.saveSettings();
                 }));
 
-        const isHorizontalStyle = this.plugin.settings.barStyle.includes('horizontal');
-        const isDotStyle = this.plugin.settings.barStyle.includes('dot');
-
-        if (isHorizontalStyle || isDotStyle) {
-            new Setting(containerEl)
-                .setName('Item Alignment')
-                .setDesc('Align items to the left, middle, or right within the container.')
-                .addDropdown(drop => drop
-                    .addOption('left', 'Left')
-                    .addOption('middle', 'Middle')
-                    .addOption('right', 'Right')
-                    .setValue(this.plugin.settings.alignment)
-                    .onChange(async (value) => {
-                        this.plugin.settings.alignment = value;
-                        await this.plugin.saveSettings();
-                    }));
-        }
+        // --- REACTIVE STYLE SETTINGS ---
+        const alignmentSetting = new Setting(containerEl)
+            .setName('Item Alignment')
+            .setDesc('Align items to the left, middle, or right within the container.')
+            .addDropdown(drop => drop
+                .addOption('left', 'Left')
+                .addOption('middle', 'Middle')
+                .addOption('right', 'Right')
+                .setValue(this.plugin.settings.alignment)
+                .onChange(async (value) => {
+                    this.plugin.settings.alignment = value;
+                    await this.plugin.saveSettings();
+                }));
 
         containerEl.createEl('br');
 
-        new Setting(containerEl)
+        const barStyleSetting = new Setting(containerEl)
             .setName('Bar Style')
             .addDropdown(drop => drop
                 .addOption('solid-horizontal', 'Solid Horizontal')
@@ -1018,46 +1015,57 @@ class InkTOCSettingTab extends PluginSettingTab {
                 .onChange(async (value) => {
                     this.plugin.settings.barStyle = value;
                     await this.plugin.saveSettings();
-                    this.display();
+                    updateStyleVisibility(); // Reactively updates UI without redrawing
                 }));
 
-        if (isDotStyle) {
-            new Setting(containerEl)
-                .setName('Dot Size')
-                .setDesc('Adjust the base diameter of the dots (Scale 1-5).')
-                .addSlider(slider => slider
-                    .setLimits(1, 5, 1)
-                    .setValue(this.plugin.settings.dotSize)
-                    .setDynamicTooltip()
-                    .onChange(async (value) => {
-                        this.plugin.settings.dotSize = value;
-                        await this.plugin.saveSettings();
-                    }));
-        } else {
-            new Setting(containerEl)
-                .setName('Bar Length')
-                .addSlider(slider => slider
-                    .setLimits(1.0, 2.0, 0.1)
-                    .setValue(this.plugin.settings.barLength)
-                    .setDynamicTooltip()
-                    .onChange(async (value) => {
-                        this.plugin.settings.barLength = value;
-                        await this.plugin.saveSettings();
-                    }));
+        const dotSizeSetting = new Setting(containerEl)
+            .setName('Dot Size')
+            .setDesc('Adjust the base diameter of the dots (Scale 1-5).')
+            .addSlider(slider => slider
+                .setLimits(1, 5, 1)
+                .setValue(this.plugin.settings.dotSize)
+                .setDynamicTooltip()
+                .onChange(async (value) => {
+                    this.plugin.settings.dotSize = value;
+                    await this.plugin.saveSettings();
+                }));
 
-            new Setting(containerEl)
-                .setName('Bar Thickness')
-                .setDesc('Adjust the thickness of the bars (Scale 1-3).')
-                .addSlider(slider => slider
-                    .setLimits(1, 3, 1)
-                    .setValue(this.plugin.settings.barThickness)
-                    .setDynamicTooltip()
-                    .onChange(async (value) => {
-                        this.plugin.settings.barThickness = value;
-                        await this.plugin.saveSettings();
-                    }));
-        }
+        const barLengthSetting = new Setting(containerEl)
+            .setName('Bar Length')
+            .addSlider(slider => slider
+                .setLimits(1.0, 2.0, 0.1)
+                .setValue(this.plugin.settings.barLength)
+                .setDynamicTooltip()
+                .onChange(async (value) => {
+                    this.plugin.settings.barLength = value;
+                    await this.plugin.saveSettings();
+                }));
 
+        const barThicknessSetting = new Setting(containerEl)
+            .setName('Bar Thickness')
+            .setDesc('Adjust the thickness of the bars (Scale 1-3).')
+            .addSlider(slider => slider
+                .setLimits(1, 3, 1)
+                .setValue(this.plugin.settings.barThickness)
+                .setDynamicTooltip()
+                .onChange(async (value) => {
+                    this.plugin.settings.barThickness = value;
+                    await this.plugin.saveSettings();
+                }));
+
+        // Helper function to dynamically show/hide style options based on Dropdown
+        const updateStyleVisibility = () => {
+            const isHorizontal = this.plugin.settings.barStyle.includes('horizontal');
+            const isDotStyle = this.plugin.settings.barStyle.includes('dot');
+
+            alignmentSetting.settingEl.style.display = (isHorizontal || isDotStyle) ? '' : 'none';
+            dotSizeSetting.settingEl.style.display = isDotStyle ? '' : 'none';
+            barLengthSetting.settingEl.style.display = !isDotStyle ? '' : 'none';
+            barThicknessSetting.settingEl.style.display = !isDotStyle ? '' : 'none';
+        };
+        updateStyleVisibility(); // Call once on load
+
+        // --- STANDARD SETTINGS ---
         new Setting(containerEl)
             .setName('Uniform Item Size')
             .setDesc('When enabled, all bars and dots will be identical in size regardless of heading level. When disabled, they scale down from H1 to H6.')
@@ -1080,7 +1088,8 @@ class InkTOCSettingTab extends PluginSettingTab {
                     await this.plugin.saveSettings();
                 }));
 
-        new Setting(containerEl)
+        // --- REACTIVE MONOCHROME SETTINGS ---
+        const monochromeSetting = new Setting(containerEl)
             .setName('Monochrome Bar')
             .setDesc('Use native text colors for a clean look that adapts to Light/Dark mode automatically.')
             .addToggle(toggle => toggle
@@ -1088,49 +1097,65 @@ class InkTOCSettingTab extends PluginSettingTab {
                 .onChange(async (value) => {
                     this.plugin.settings.useMonochrome = value;
                     await this.plugin.saveSettings();
-                    this.display();
+                    updateMonochromeVisibility(); // Reactively updates UI
                 }));
 
-        if (!this.plugin.settings.useMonochrome) {
-            containerEl.createEl('br');
-            containerEl.createEl('h3', { text: 'Heading Colors' });
-            containerEl.createEl('p', { text: 'Set specific item colors. The left picker applies to Dark Mode, the right picker applies to Light Mode.', cls: 'setting-item-description' });
+        const colorsHeaderDiv = containerEl.createDiv();
+        colorsHeaderDiv.createEl('br');
+        colorsHeaderDiv.createEl('h3', { text: 'Heading Colors' });
+        colorsHeaderDiv.createEl('p', { text: 'Set specific item colors. The left picker applies to Dark Mode, the right picker applies to Light Mode.', cls: 'setting-item-description' });
 
-            for (let i = 1; i <= 6; i++) {
-                const keyDark = `h${i}Color`;
-                const keyLight = `h${i}ColorLight`;
+        const colorSettings = [];
+        for (let i = 1; i <= 6; i++) {
+            const keyDark = `h${i}Color`;
+            const keyLight = `h${i}ColorLight`;
+            let darkPicker, lightPicker;
 
-                new Setting(containerEl)
-                    .setName(`H${i} Colors`)
-                    .setDesc(`Left: Dark | Right: Light`)
-                    .addColorPicker(color => color
-                        .setValue(this.plugin.settings[keyDark])
-                        .onChange(async (value) => {
-                            this.plugin.settings[keyDark] = value;
-                            await this.plugin.saveSettings();
-                        }))
-                    .addColorPicker(color => color
-                        .setValue(this.plugin.settings[keyLight])
-                        .onChange(async (value) => {
-                            this.plugin.settings[keyLight] = value;
-                            await this.plugin.saveSettings();
-                        }))
-                    .addExtraButton(button => button
-                        .setIcon('rotate-ccw')
-                        .setTooltip('Reset to default colors')
-                        .onClick(async () => {
-                            this.plugin.settings[keyDark] = DEFAULT_SETTINGS[keyDark];
-                            this.plugin.settings[keyLight] = DEFAULT_SETTINGS[keyLight];
-                            await this.plugin.saveSettings();
-                            this.display();
-                        })
-                    );
-            }
+            const setting = new Setting(containerEl)
+                .setName(`H${i} Colors`)
+                .setDesc(`Left: Dark | Right: Light`)
+                .addColorPicker(color => {
+                    darkPicker = color;
+                    color.setValue(this.plugin.settings[keyDark])
+                         .onChange(async (value) => {
+                             this.plugin.settings[keyDark] = value;
+                             await this.plugin.saveSettings();
+                         });
+                })
+                .addColorPicker(color => {
+                    lightPicker = color;
+                    color.setValue(this.plugin.settings[keyLight])
+                         .onChange(async (value) => {
+                             this.plugin.settings[keyLight] = value;
+                             await this.plugin.saveSettings();
+                         });
+                })
+                .addExtraButton(button => button
+                    .setIcon('rotate-ccw')
+                    .setTooltip('Reset to default colors')
+                    .onClick(async () => {
+                        this.plugin.settings[keyDark] = DEFAULT_SETTINGS[keyDark];
+                        this.plugin.settings[keyLight] = DEFAULT_SETTINGS[keyLight];
+                        await this.plugin.saveSettings();
+                        if (darkPicker) darkPicker.setValue(DEFAULT_SETTINGS[keyDark]);
+                        if (lightPicker) lightPicker.setValue(DEFAULT_SETTINGS[keyLight]);
+                    })
+                );
+            colorSettings.push(setting);
         }
 
-        containerEl.createEl('br');
+        // Helper function to dynamically show/hide the color palette
+        const updateMonochromeVisibility = () => {
+            const show = !this.plugin.settings.useMonochrome;
+            colorsHeaderDiv.style.display = show ? '' : 'none';
+            colorSettings.forEach(s => s.settingEl.style.display = show ? '' : 'none');
+        };
+        updateMonochromeVisibility(); // Call once on load
 
-        new Setting(containerEl)
+        colorsHeaderDiv.createEl('br');
+
+        // --- REACTIVE BACKGROUND SETTINGS ---
+        const tocBackgroundSetting = new Setting(containerEl)
             .setName('TOC Background')
             .setDesc('Display a rounded solid background container behind the TOC.')
             .addToggle(toggle => toggle
@@ -1138,45 +1163,54 @@ class InkTOCSettingTab extends PluginSettingTab {
                 .onChange(async (value) => {
                     this.plugin.settings.showBackground = value;
                     await this.plugin.saveSettings();
-                    this.display();
+                    updateBgVisibility(); // Reactively updates UI
                 }));
 
-        if (this.plugin.settings.showBackground) {
-            new Setting(containerEl)
-                .setName('TOC Background Opacity')
-                .setDesc('Adjust the transparency of the background track (0 = perfectly transparent).')
-                .addSlider(slider => slider
-                    .setLimits(0, 100, 1)
-                    .setValue(this.plugin.settings.bgOpacity)
-                    .setDynamicTooltip()
-                    .onChange(async (value) => {
-                        this.plugin.settings.bgOpacity = value;
-                        await this.plugin.saveSettings();
-                    }));
+        const bgOpacitySetting = new Setting(containerEl)
+            .setName('TOC Background Opacity')
+            .setDesc('Adjust the transparency of the background track (0 = perfectly transparent).')
+            .addSlider(slider => slider
+                .setLimits(0, 100, 1)
+                .setValue(this.plugin.settings.bgOpacity)
+                .setDynamicTooltip()
+                .onChange(async (value) => {
+                    this.plugin.settings.bgOpacity = value;
+                    await this.plugin.saveSettings();
+                }));
 
-            const colorSetting = new Setting(containerEl)
-                .setName('TOC Background Color')
-                .setDesc('Select the base color for the solid background track. Click reset to restore the adaptive theme default.')
-                .addColorPicker(color => color
-                    .setValue(this.plugin.settings.bgColor || '#000000')
-                    .onChange(async (value) => {
-                        this.plugin.settings.bgColor = value;
-                        await this.plugin.saveSettings();
-                    }));
-
-            colorSetting.addExtraButton(button => button
+        let bgColorPicker;
+        const bgColorSetting = new Setting(containerEl)
+            .setName('TOC Background Color')
+            .setDesc('Select the base color for the solid background track. Click reset to restore the adaptive theme default.')
+            .addColorPicker(color => {
+                bgColorPicker = color;
+                color.setValue(this.plugin.settings.bgColor || '#000000')
+                     .onChange(async (value) => {
+                         this.plugin.settings.bgColor = value;
+                         await this.plugin.saveSettings();
+                     });
+            })
+            .addExtraButton(button => button
                 .setIcon('rotate-ccw')
                 .setTooltip('Reset to adaptive theme default')
                 .onClick(async () => {
                     this.plugin.settings.bgColor = '';
                     await this.plugin.saveSettings();
-                    this.display();
+                    if (bgColorPicker) bgColorPicker.setValue('#000000');
                 })
             );
-        }
+
+        // Helper function to dynamically show/hide background configuration options
+        const updateBgVisibility = () => {
+            const show = this.plugin.settings.showBackground;
+            bgOpacitySetting.settingEl.style.display = show ? '' : 'none';
+            bgColorSetting.settingEl.style.display = show ? '' : 'none';
+        };
+        updateBgVisibility(); // Call once on load
 
         containerEl.createEl('br');
 
+        // --- REMAINDER SETTINGS ---
         new Setting(containerEl)
             .setName('Hide Specific Headings')
             .setDesc('Enter heading levels to hide, separated by commas (e.g. h3, h4).')
@@ -1196,7 +1230,6 @@ class InkTOCSettingTab extends PluginSettingTab {
                 .onChange(async (value) => {
                     this.plugin.settings.enableTooltip = value;
                     await this.plugin.saveSettings();
-                    this.display();
                 }));
 
         containerEl.createEl('br');
